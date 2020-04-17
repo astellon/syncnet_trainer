@@ -12,7 +12,7 @@ from accuracy import accuracy
 class LossScale(nn.Module):
     def __init__(self, init_w=10.0, init_b=-5.0):
         super(LossScale, self).__init__()
-        
+
         self.wI = nn.Parameter(torch.tensor(init_w))
         self.bI = nn.Parameter(torch.tensor(init_b))
 
@@ -62,7 +62,7 @@ class SyncNet(nn.Module):
     def train_network(self,loader=None,evalmode=None, alpC=1.0, alpI=1.0):
 
         print('Content loss %f Identity loss %f'%(alpC,alpI))
-        
+
         if evalmode:
             self.eval();
         else:
@@ -83,18 +83,18 @@ class SyncNet(nn.Module):
         criterion = torch.nn.CrossEntropyLoss()
         stepsize = loader.batch_size
         label_id = torch.arange(stepsize).cuda()
-        
-        
+
+
         for data in loader:
 
             tstart = time.time()
 
             self.zero_grad();
 
-            data_v, data_a = data 
+            data_v, data_a = data
 
             # ==================== FORWARD PASS ====================
-            
+
             if evalmode:
                 with torch.no_grad():
                     out_a, out_A    = self.__S__.forward_aud(data_a.cuda());
@@ -109,7 +109,7 @@ class SyncNet(nn.Module):
             ri          = random.randint(0,time_size-1)
             out_AA      = torch.mean(out_A,2,keepdim=True);
             out_VA      = out_V[:,:,[ri]]
-            
+
             # sync loss and accuracy
             nloss_sy, p1s = self.sync_loss(out_v, out_a, criterion)
 
@@ -117,17 +117,17 @@ class SyncNet(nn.Module):
             idoutput    = F.cosine_similarity(out_VA.expand(-1,-1,stepsize),out_AA.expand(-1,-1,stepsize).transpose(0,2)) * self.__L__.wI + self.__L__.bI
 
             nloss_id    = criterion(idoutput, label_id)
-            
+
             p1i, p5i    = accuracy(idoutput.detach().cpu(), label_id.detach().cpu(), topk=(1, 2))
 
             # ==================== Divergence Loss ====================
 
-            nloss = alpC * nloss_sy + alpI * nloss_id 
+            nloss = alpC * nloss_sy + alpI * nloss_id
 
             if not evalmode:
                 nloss.backward()
                 self.__optimizer__.step();
-            
+
             loss += nloss.detach().cpu();
             top1_sy += p1s[0]
             top1_id += p1i[0]
@@ -144,11 +144,11 @@ class SyncNet(nn.Module):
 
             sys.stdout.write("Q:(%d/%d)"%(loader.qsize(), loader.maxQueueSize));
             sys.stdout.flush();
-            
+
             index += stepsize;
 
         sys.stdout.write("\n");
-        
+
         return (loss/counter, top1_id/counter);
 
 
@@ -157,9 +157,9 @@ class SyncNet(nn.Module):
     ## ===== ===== ===== ===== ===== ===== ===== =====
 
     def evaluateFromListSave(self, listfilename, print_interval=10, test_path='', num_eval=10):
-        
+
         self.eval();
-        
+
         lines       = []
         files       = []
         filedict    = {}
@@ -170,7 +170,7 @@ class SyncNet(nn.Module):
         with open(listfilename) as listfile:
             while True:
                 line = listfile.readline();
-                if (not line): 
+                if (not line):
                     break;
 
                 data = line.split();
@@ -214,7 +214,7 @@ class SyncNet(nn.Module):
 
             score = numpy.mean(dist);
 
-            all_scores.append(score);  
+            all_scores.append(score);
             all_labels.append(int(data[0]));
 
             if idx % print_interval == 0:

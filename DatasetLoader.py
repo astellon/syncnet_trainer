@@ -52,7 +52,7 @@ class DatasetLoader(object):
 
 
     def dataLoaderThread(self, nThreadIndex):
-        
+
         index = nThreadIndex*self.batch_size;
 
         if(index >= self.nFiles):
@@ -65,7 +65,7 @@ class DatasetLoader(object):
 
             feat_a = []
             feat_i = []
-            
+
             for filename in self.data_epoch[index:index+self.batch_size]:
 
                 offset      = int(filename[2])
@@ -79,10 +79,10 @@ class DatasetLoader(object):
 
                 feat_a.append(loadWAV(filename[1], max_frames=self.nMaxFrames*4, start_frame=startidx*4))
                 feat_i.append(get_frames(filename[0], max_frames=self.nMaxFrames, start_frame=startidx+offset-1))
-                
+
             data_im = torch.cat(feat_i,dim=0)
             data_aud = torch.cat(feat_a,dim=0)
-            
+
             self.datasetQueue.put([data_im, data_aud]);
 
             index += self.batch_size*self.nWorkers;
@@ -110,7 +110,7 @@ class DatasetLoader(object):
     def __next__(self):
         while(True):
             isFinished = True;
-            
+
             if(self.datasetQueue.empty() == False):
                 return self.datasetQueue.get();
             for index in range(0, self.nWorkers):

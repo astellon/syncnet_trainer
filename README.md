@@ -23,7 +23,7 @@ Check that the training list contains approximately 1,092K lines and the test li
 #### Training example
 
 ```
-python trainSyncNet.py --temporal_stride 2 --maxFrames 50 --model models.SyncNetModelFBank --save_path data/exp01 
+python trainSyncNet.py --temporal_stride 2 --maxFrames 50 --model models.SyncNetModelFBank --save_path data/exp01
 ```
 
 #### Pretrained model
@@ -33,7 +33,7 @@ A pretrained model can be downloaded from [here](http://www.robots.ox.ac.uk/~vgg
 You can check that the following script returns: `EER 20.4348`.
 
 ```
-python trainSyncNet.py --temporal_stride 2 --maxFrames 50 --model models.SyncNetModelFBank --initial_model data/voxsrc2020_baseline.model --eval 
+python trainSyncNet.py --temporal_stride 2 --maxFrames 50 --model models.SyncNetModelFBank --initial_model data/voxsrc2020_baseline.model --eval
 ```
 
 #### Citation

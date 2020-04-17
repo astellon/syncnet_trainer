@@ -83,7 +83,7 @@ class MFCC(torch.nn.Module):
         """
         Calculates the FFT size as a power of two greater than or equal to
         the number of samples in a single window length.
-        
+
         Having an FFT less than the window length loses precision by dropping
         many of the samples; a longer FFT than the window allows zero-padding
         of the FFT buffer which is neutral in terms of frequency domain conversion.
@@ -96,7 +96,7 @@ class MFCC(torch.nn.Module):
             nfft *= 2
         return nfft
 
-    
+
     def forward(self,signals,lengths):
         """
         Calculates MFCC.
@@ -114,7 +114,7 @@ class MFCC(torch.nn.Module):
             if self.appendEnergy:
                 feat[:,0] = torch.log(energy) # replace first cepstral coefficient with log of frame energy
             outs.append(feat)
-        
+
         # Pad each element of outs list
         max_len = max(outs,key=lambda x: x.shape[0]).shape[0]
         mfcc_lengths = []
@@ -144,7 +144,7 @@ class MFCC(torch.nn.Module):
 
         return feat,energy
 
-    
+
     def preemphasis(self,signal,coeff=0.95):
         """
         perform preemphasis on the input signal.
@@ -179,7 +179,7 @@ class MFCC(torch.nn.Module):
         zeros = torch.zeros((padlen-slen)).to(self.torch_device)
 
         padsignal = torch.cat((signal,zeros))
-        
+
         indices = numpy.tile(numpy.arange(0, frame_len), (numframes, 1)) + numpy.tile(numpy.arange(0, numframes * frame_step, frame_step), (frame_len, 1)).T
         ind_shape = indices.shape
         indices = numpy.array(indices, dtype=numpy.int32).reshape([-1])
@@ -220,7 +220,7 @@ class MFCC(torch.nn.Module):
         to fft bins. The filters are returned as an array of size nfilt * (nfft/2 + 1)
         :returns: A numpy array of size nfilt * (nfft/2 + 1) containing filterbank. Each row holds 1 filter.
         """
-        
+
         # compute points evenly spaced in mels
         lowmel = hz2mel(self.lowfreq)
         highmel = hz2mel(self.highfreq)

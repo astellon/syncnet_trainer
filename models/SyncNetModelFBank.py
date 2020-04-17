@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 import torchaudio
-    
+
 class SyncNetModel(nn.Module):
     def __init__(self, nOut = 1024, stride = 1):
         super(SyncNetModel, self).__init__();
@@ -103,7 +103,7 @@ class SyncNetModel(nn.Module):
 
         ## Image stream
 
-        mid = self.netcnnlip(x); 
+        mid = self.netcnnlip(x);
         mid = mid.view((mid.size()[0], mid.size()[1], -1)); # N x (ch x 24)
 
         out1  = self.netfclip(mid);
@@ -118,7 +118,7 @@ class SyncNetModel(nn.Module):
         x = self.torchfb(x)+1e-6
         x = self.instancenorm(x.log())
         x = x[:,:,1:-1].detach()
-        
+
         mid = self.netcnnaud(x.unsqueeze(1)); # N x ch x 24 x M
         mid = mid.view((mid.size()[0], mid.size()[1], -1)); # N x (ch x 24)
 

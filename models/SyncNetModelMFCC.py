@@ -4,7 +4,7 @@
 import torch
 import torch.nn as nn
 import pytorch_mfcc
-    
+
 class SyncNetModel(nn.Module):
     def __init__(self, nOut = 1024, stride=1):
         super(SyncNetModel, self).__init__();
@@ -32,7 +32,7 @@ class SyncNetModel(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=(3,3), stride=(2,2)),
-            
+
             nn.Conv2d(256, 512, kernel_size=(5,4), padding=(0,0), stride=(1,stride)),
             nn.BatchNorm2d(512),
             nn.ReLU(),
@@ -101,7 +101,7 @@ class SyncNetModel(nn.Module):
 
         x1,mfcc_lengths = self.mfcc_layer(x,[x.size()[1]]*x.size()[0])      # Do mfcc
         x1 = x1.unsqueeze(1).transpose(2,3).detach()
-        
+
         mid = self.netcnnaud(x1); # N x ch x 24 x M
         mid = mid.view((mid.size()[0], mid.size()[1], -1)); # N x (ch x 24)
 
@@ -112,7 +112,7 @@ class SyncNetModel(nn.Module):
 
     def forward_vid(self, x):
 
-        mid = self.netcnnlip(x); 
+        mid = self.netcnnlip(x);
         mid = mid.view((mid.size()[0], mid.size()[1], -1)); # N x (ch x 24)
 
         out1  = self.netfclip(mid);

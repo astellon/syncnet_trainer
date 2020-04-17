@@ -98,12 +98,12 @@ elif(args.initial_model != ""):
     print("Model %s loaded!"%args.initial_model);
 
 for ii in range(0,it-1):
-    clr = s.updateLearningRate(args.lr_decay) 
+    clr = s.updateLearningRate(args.lr_decay)
 
 # ==================== EVAL ====================
 
 if args.eval == True:
-        
+
     sc, lab = s.evaluateFromListSave(args.test_list, print_interval=100, test_path=args.test_path)
     result = tuneThresholdfromScore(sc, lab, [1, 0.1]);
     print('EER %2.4f'%result[1])
@@ -123,7 +123,7 @@ print('Reading done.')
 
 clr = s.updateLearningRate(1)
 
-while(1):   
+while(1):
     print(time.strftime("%Y-%m-%d %H:%M:%S"), it, "Start Iteration");
 
     loss, trainacc  = s.train_network(trainLoader, evalmode=False, alpI=args.alphaI, alpC=args.alphaC);
@@ -135,7 +135,7 @@ while(1):
 
     # ==================== SAVE MODEL ====================
 
-    clr = s.updateLearningRate(args.lr_decay) 
+    clr = s.updateLearningRate(args.lr_decay)
 
     print(time.strftime("%Y-%m-%d %H:%M:%S"), "Saving model %d" % it)
     s.saveParameters(model_save_path+"/model%09d.model"%it);

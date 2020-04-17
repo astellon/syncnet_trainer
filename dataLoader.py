@@ -28,7 +28,7 @@ def loadWAV(filename, max_frames, start_frame=0, evalmode=False, num_eval=10):
         start_frame = numpy.linspace(0,audiosize-max_audio,num=num_eval)
     else:
         start_frame = numpy.array([start_audio])
-    
+
     feats = []
     for asf in start_frame:
         feats.append(audio[int(asf):int(asf)+max_audio])
