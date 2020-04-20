@@ -119,3 +119,9 @@ class SyncNetModel(nn.Module):
         out2  = self.netfcface(mid);
 
         return out1, out2;
+
+    def forward(self, aud, vid):
+        out_a1, out_a2 = self.forward_aud(aud)
+        out_v1, out_v2 = self.forward_aud(vid)
+        return { 'audio1': out_a1, 'audio2': out_a2,
+                 'video1': out_v1, 'video2': out_v2 }

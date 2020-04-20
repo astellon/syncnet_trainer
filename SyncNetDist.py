@@ -30,6 +30,9 @@ class SyncNet(nn.Module):
         self.__S__ = SyncNetModel(nOut = nOut, stride=temporal_stride).cuda();
         self.__L__ = LossScale().cuda();
 
+        if torch.cuda.device_count() > 1:
+            self.__S__ = nn.DataParallel(self.__S__)
+
         self.__optimizer__ = torch.optim.SGD(self.parameters(), lr = learning_rate, momentum=0.9, weight_decay=1e-5);
 
         self.__max_frames__ = maxFrames;
@@ -97,12 +100,12 @@ class SyncNet(nn.Module):
 
             if evalmode:
                 with torch.no_grad():
-                    out_a, out_A    = self.__S__.forward_aud(data_a.cuda());
-                    out_v, out_V    = self.__S__.forward_vid(data_v.cuda());
+                    ret = self.__S__.forward(data_a.cuda(), data_v.cuda())
+                    out_a, out_A, out_v, out_V = ret['audio1'], ret['audio2'],ret['video1'], ret['video2']
 
             else:
-                out_a, out_A    = self.__S__.forward_aud(data_a.cuda());
-                out_v, out_V    = self.__S__.forward_vid(data_v.cuda());
+                    ret = self.__S__.forward(data_a.cuda(), data_v.cuda())
+                    out_a, out_A, out_v, out_V = ret['audio1'], ret['audio2'],ret['video1'], ret['video2']
 
             time_size   = out_V.size()[2]
 
