@@ -8,6 +8,7 @@ import numpy
 from torch.autograd import Function
 import math
 
+
 def dct(x, norm=None):
     """
     ##This code fragment is from https://github.com/zh217/torch-dct/blob/master/torch_dct/_dct.py ##
@@ -26,7 +27,8 @@ def dct(x, norm=None):
 
     Vc = torch.rfft(v, 1, onesided=False)
 
-    k = - torch.arange(N, dtype=x.dtype, device=x.device)[None, :] * numpy.pi / (2 * N)
+    k = - torch.arange(N, dtype=x.dtype,
+                       device=x.device)[None, :] * numpy.pi / (2 * N)
     W_r = torch.cos(k)
     W_i = torch.sin(k)
 
@@ -63,8 +65,8 @@ def mel2hz(mel):
 
 
 class MFCC(torch.nn.Module):
-    def __init__(self,samplerate=16000,winlen=0.025,winstep=0.01,numcep=13,nfilt=26,nfft=None,lowfreq=0,highfreq=None,preemph=0.97,ceplifter=22,appendEnergy=True):
-        super(MFCC,self).__init__()
+    def __init__(self, samplerate=16000, winlen=0.025, winstep=0.01, numcep=13, nfilt=26, nfft=None, lowfreq=0, highfreq=None, preemph=0.97, ceplifter=22, appendEnergy=True):
+        super(MFCC, self).__init__()
         self.samplerate = samplerate
         self.winlen = winlen
         self.winstep = winstep
@@ -76,8 +78,7 @@ class MFCC(torch.nn.Module):
         self.preemph = preemph
         self.ceplifter = ceplifter
         self.appendEnergy = appendEnergy
-        self.winfunc=lambda x:numpy.ones((x,))
-
+        self.winfunc = lambda x: numpy.ones((x,))
 
     def calculate_nfft(self):
         """
@@ -95,9 +96,7 @@ class MFCC(torch.nn.Module):
         while nfft < window_length_samples:
             nfft *= 2
         return nfft
-
-
-    def forward(self,signals,lengths):
+    def forward(self, signals, lengths):
         """
         Calculates MFCC.
         :param signals: (torch.Tensor) batch of signals padded by 0.
@@ -106,27 +105,28 @@ class MFCC(torch.nn.Module):
         self.tensor_type = signals.dtype
         self.torch_device = signals.device
         outs = []
-        for i,signal in enumerate(signals):
-            feat,energy = self.fbank(signal[:lengths[i]])
+        for i, signal in enumerate(signals):
+            feat, energy = self.fbank(signal[:lengths[i]])
             feat = torch.log(feat)
-            feat = dct(feat,norm='ortho')[:,:self.numcep]
+            feat = dct(feat, norm='ortho')[:, :self.numcep]
             feat = self.lifter(feat)
             if self.appendEnergy:
-                feat[:,0] = torch.log(energy) # replace first cepstral coefficient with log of frame energy
+                # replace first cepstral coefficient with log of frame energy
+                feat[:, 0] = torch.log(energy)
             outs.append(feat)
 
         # Pad each element of outs list
-        max_len = max(outs,key=lambda x: x.shape[0]).shape[0]
+        max_len = max(outs, key=lambda x: x.shape[0]).shape[0]
         mfcc_lengths = []
         for i in range(len(outs)):
             mfcc_lengths.append(len(outs[i]))
-            zeros = torch.zeros((max_len-outs[i].shape[0],outs[i].shape[1]),dtype=self.tensor_type).to(self.torch_device)
-            outs[i] = torch.cat([outs[i],zeros],dim=0)
+            zeros = torch.zeros(
+                (max_len-outs[i].shape[0], outs[i].shape[1]), dtype=self.tensor_type).to(self.torch_device)
+            outs[i] = torch.cat([outs[i], zeros], dim=0)
         outs = torch.stack(outs)
-        return outs,mfcc_lengths
+        return outs, mfcc_lengths
 
-
-    def fbank(self,signal):
+    def fbank(self, signal):
         """
         Compute Mel-filterbank energy features from an audio signal.
         :param signal: the audio signal from which to compute features. Should be an N*1 array
@@ -135,17 +135,19 @@ class MFCC(torch.nn.Module):
         signal = self.preemphasis(signal)
         frames = self.framesig(signal)
         pspec = self.powspec(frames)
-        energy = torch.sum(pspec,dim=1) # this stores the total energy in each frame
-        energy = energy + numpy.finfo(numpy.float32).eps # if energy is zero, we get problems with log
+        # this stores the total energy in each frame
+        energy = torch.sum(pspec, dim=1)
+        # if energy is zero, we get problems with log
+        energy = energy + numpy.finfo(numpy.float32).eps
 
         fb = self.get_filterbanks()
-        feat = torch.mm(pspec,fb) # compute the filterbank energies
-        feat = feat + numpy.finfo(numpy.float32).eps # if feat is zero, we get problems with log
+        feat = torch.mm(pspec, fb)  # compute the filterbank energies
+        # if feat is zero, we get problems with log
+        feat = feat + numpy.finfo(numpy.float32).eps
 
-        return feat,energy
+        return feat, energy
 
-
-    def preemphasis(self,signal,coeff=0.95):
+    def preemphasis(self, signal, coeff=0.95):
         """
         perform preemphasis on the input signal.
         :param signal: The signal to filter.
@@ -154,10 +156,9 @@ class MFCC(torch.nn.Module):
         """
         a = signal[0].view(1)
         b = signal[1:] - self.preemph * signal[:-1]
-        return torch.cat([a,b])
+        return torch.cat([a, b])
 
-
-    def framesig(self,signal):
+    def framesig(self, signal):
         """
         Frame a signal into overlapping frames.
         :param sig: the audio signal to frame.
@@ -172,34 +173,35 @@ class MFCC(torch.nn.Module):
         if slen <= frame_len:
             numframes = 1
         else:
-            numframes = 1 + int(math.ceil((1.0 * slen - frame_len) / frame_step))
+            numframes = 1 + \
+                int(math.ceil((1.0 * slen - frame_len) / frame_step))
 
         padlen = int((numframes - 1) * frame_step + frame_len)
 
         zeros = torch.zeros((padlen-slen)).to(self.torch_device)
 
-        padsignal = torch.cat((signal,zeros))
+        padsignal = torch.cat((signal, zeros))
 
-        indices = numpy.tile(numpy.arange(0, frame_len), (numframes, 1)) + numpy.tile(numpy.arange(0, numframes * frame_step, frame_step), (frame_len, 1)).T
+        indices = numpy.tile(numpy.arange(0, frame_len), (numframes, 1)) + numpy.tile(
+            numpy.arange(0, numframes * frame_step, frame_step), (frame_len, 1)).T
         ind_shape = indices.shape
         indices = numpy.array(indices, dtype=numpy.int32).reshape([-1])
         frames = padsignal[indices].view(ind_shape)
         win = numpy.tile(self.winfunc(frame_len), (numframes, 1))
-        win = torch.tensor(win,dtype=self.tensor_type).to(self.torch_device)
+        win = torch.tensor(win, dtype=self.tensor_type).to(self.torch_device)
 
         return frames * win
 
-    def powspec(self,frames):
+    def powspec(self, frames):
         """
         Compute the power spectrum of each frame in frames. If frames is an NxD matrix, output will be Nx(NFFT/2+1).
         :param frames: the array of frames. Each row is a frame.
         :returns: If frames is an NxD matrix, output will be Nx(NFFT/2+1). Each row will be the power spectrum of the corresponding frame.
         """
         maged = self.magspec(frames)
-        return 1.0 / self.nfft * torch.mul(maged,maged)
+        return 1.0 / self.nfft * torch.mul(maged, maged)
 
-
-    def magspec(self,frames):
+    def magspec(self, frames):
         """
         Compute the magnitude spectrum of each frame in frames. If frames is an NxD matrix, output will be Nx(NFFT/2+1).
         :param frames: the array of frames. Each row is a frame.
@@ -207,12 +209,13 @@ class MFCC(torch.nn.Module):
         """
         if frames.shape[1] < self.nfft:
             fshape = frames.shape
-            cat_zeros = torch.zeros([fshape[0],self.nfft-fshape[1]],dtype=self.tensor_type,device=self.torch_device)
-            frames = torch.cat([frames,cat_zeros],dim=1)
-        complex_spec = torch.rfft(frames,1)
-        abs_spec = torch.sqrt(torch.sum(torch.mul(complex_spec,complex_spec),dim=2)) # complex absolute
+            cat_zeros = torch.zeros(
+                [fshape[0], self.nfft-fshape[1]], dtype=self.tensor_type, device=self.torch_device)
+            frames = torch.cat([frames, cat_zeros], dim=1)
+        complex_spec = torch.rfft(frames, 1)
+        abs_spec = torch.sqrt(
+            torch.sum(torch.mul(complex_spec, complex_spec), dim=2))  # complex absolute
         return abs_spec
-
 
     def get_filterbanks(self):
         """
@@ -224,22 +227,21 @@ class MFCC(torch.nn.Module):
         # compute points evenly spaced in mels
         lowmel = hz2mel(self.lowfreq)
         highmel = hz2mel(self.highfreq)
-        melpoints = numpy.linspace(lowmel,highmel,self.nfilt+2)
+        melpoints = numpy.linspace(lowmel, highmel, self.nfilt+2)
         # our points are in Hz, but we use fft bins, so we have to convert
         #  from Hz to fft bin number
         bin = numpy.floor((self.nfft+1)*mel2hz(melpoints)/self.samplerate)
 
-        fbank = numpy.zeros([self.nfilt,self.nfft//2+1])
-        for j in range(0,self.nfilt):
+        fbank = numpy.zeros([self.nfilt, self.nfft//2+1])
+        for j in range(0, self.nfilt):
             for i in range(int(bin[j]), int(bin[j+1])):
-                fbank[j,i] = (i - bin[j]) / (bin[j+1]-bin[j])
+                fbank[j, i] = (i - bin[j]) / (bin[j+1]-bin[j])
             for i in range(int(bin[j+1]), int(bin[j+2])):
-                fbank[j,i] = (bin[j+2]-i) / (bin[j+2]-bin[j+1])
-        rtn = torch.tensor(fbank.T,dtype=self.tensor_type,device=self.torch_device)
+                fbank[j, i] = (bin[j+2]-i) / (bin[j+2]-bin[j+1])
+        rtn = torch.tensor(fbank.T, dtype=self.tensor_type,
+                           device=self.torch_device)
         return rtn
-
-
-    def lifter(self,cepstra):
+    def lifter(self, cepstra):
         """
         Apply a cepstral lifter the the matrix of cepstra. This has the effect of increasing the
         magnitude of the high frequency DCT coeffs.
@@ -247,8 +249,9 @@ class MFCC(torch.nn.Module):
         feat,ceplifter
         """
         if self.ceplifter > 0:
-            nframes,ncoeff = cepstra.shape
-            n = torch.arange(ncoeff).type(self.tensor_type).to(self.torch_device)
+            nframes, ncoeff = cepstra.shape
+            n = torch.arange(ncoeff).type(
+                self.tensor_type).to(self.torch_device)
             lift = 1 + (self.ceplifter/2.)*torch.sin(numpy.pi*n/self.ceplifter)
             return lift*cepstra
         else:
