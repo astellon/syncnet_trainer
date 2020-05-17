@@ -12,6 +12,8 @@ from queue import Queue
 
 from dataLoader import *
 
+import video2npy
+
 
 class DatasetLoader(object):
     def __init__(self, dataset_file_name, nPerEpoch, nBatchSize, maxFrames, nDataLoaderThread, maxQueueSize=5, evalmode=False, **kwargs):
@@ -79,8 +81,8 @@ class DatasetLoader(object):
 
                 feat_a.append(
                     loadWAV(filename[1], max_frames=self.nMaxFrames*4, start_frame=startidx*4))
-                feat_i.append(get_frames(
-                    filename[0], max_frames=self.nMaxFrames, start_frame=startidx+offset-1))
+                feat_i.append(
+                    video2npy.load_frames(filename[0], max_frames=self.nMaxFrames, start_frame=startidx+offset-1))
 
             data_im = torch.cat(feat_i, dim=0)
             data_aud = torch.cat(feat_a, dim=0)
