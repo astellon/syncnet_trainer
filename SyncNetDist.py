@@ -38,7 +38,7 @@ class SyncNet(nn.Module):
         self.__S__ = SyncNetModel(nOut=nOut, stride=temporal_stride).cuda()
         self.__L__ = LossScale().cuda()
 
-        if torch.cuda.device_count() > 1:
+        if not kwargs['eval'] and torch.cuda.device_count() > 1:
             self.__S__ = nn.DataParallel(self.__S__)
 
         self.__optimizer__ = torch.optim.SGD(
