@@ -61,10 +61,6 @@ class DatasetLoader(object):
             return
 
         while(True):
-            if(self.datasetQueue.full() == True):
-                time.sleep(1.0)
-                continue
-
             feat_a = []
             feat_i = []
 
