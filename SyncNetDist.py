@@ -29,7 +29,7 @@ class LossScale(nn.Module):
 
 class SyncNet(nn.Module):
 
-    def __init__(self, model=None, maxFrames=200, learning_rate=0.0001, nOut=1024, temporal_stride=1, **kwargs):
+    def __init__(self, model=None, maxFrames=200, lr=0.0001, nOut=1024, temporal_stride=1, **kwargs):
         super(SyncNet, self).__init__()
 
         SyncNetModel = importlib.import_module(
@@ -42,7 +42,7 @@ class SyncNet(nn.Module):
             self.__S__ = nn.DataParallel(self.__S__)
 
         self.__optimizer__ = torch.optim.SGD(
-            self.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-5)
+            self.parameters(), lr=lr, momentum=0.9, weight_decay=1e-5)
 
         self.__max_frames__ = maxFrames
 
