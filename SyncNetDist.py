@@ -47,30 +47,27 @@ class SyncNet(nn.Module):
         self.__max_frames__ = maxFrames
 
     def sync_loss(self, out_v, out_a, criterion):
-
         batch_size = out_a.size()[0]
         time_size = out_a.size()[2]
 
-        label = torch.arange(time_size).cuda()
+        label = torch.arange(time_size, device='cuda').repeat_interleave(batch_size)
 
-        nloss = 0
-        prec1 = 0
+        # BxCxT => # TxCxB
+        ft_a = out_a.transpose(2, 0)
+        ft_v = out_v.transpose(2, 0)
 
-        for ii in range(0, batch_size):
-            ft_v = out_v[[ii], :, :].transpose(2, 0)
-            ft_a = out_a[[ii], :, :].transpose(2, 0)
-            output = F.cosine_similarity(
-                ft_v.expand(-1, -1, time_size), ft_a.expand(-1, -1, time_size).transpose(0, 2)) * self.__L__.wC + self.__L__.bC
-            p1, p5 = accuracy(output.detach().cpu(),
-                              label.detach().cpu(), topk=(1, 5))
+        ft_a = ft_a.unsqueeze(-1).expand(-1, -1, -1, time_size)
+        ft_v = ft_v.unsqueeze(-1).expand(-1, -1, -1, time_size).transpose(0, 3)
 
-            nloss += criterion(output, label)
-            prec1 += p1
+        # output has TxBxT
+        output = F.cosine_similarity(ft_a, ft_v)
+        output = output.reshape(time_size*batch_size, time_size)
 
-        nloss = nloss / batch_size
-        prec1 = prec1 / batch_size
+        p1, p5 = accuracy(output, label, topk=(1, 5))
+        nloss = criterion(output, label)
 
-        return nloss, prec1
+        return nloss, p1
+
     def train_network(self, loader=None, evalmode=None, alpC=1.0, alpI=1.0):
 
         print('Content loss %f Identity loss %f' % (alpC, alpI))
